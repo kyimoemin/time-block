@@ -258,9 +258,7 @@
             <div class="time-info">
               <div id="endTimeDisplay"></div>
             </div>
-            <button id="editBtn" class="btn btn-secondary">
-              Edit / Configure
-            </button>
+            <button id="editBtn" class="btn btn-secondary">Change</button>
           </div>
         </div>
       </div>
@@ -498,7 +496,9 @@
           elements.countdown.textContent = formatTime(
             blockInfo.remainingSeconds
           );
-          elements.blocksInfo.textContent = `Block ${blockInfo.currentBlock} of ${blockInfo.totalBlocks}`;
+          const blocksRemaining =
+            blockInfo.totalBlocks - blockInfo.currentBlock + 1;
+          elements.blocksInfo.textContent = `${blocksRemaining} of ${blockInfo.totalBlocks} blocks remaining`;
           renderBlocksProgress(blockInfo.currentBlock, blockInfo.totalBlocks);
         }
 
