@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Time Block</title>
+    <style>
+      :root {
+        --primary-color: #4a90d9;
+        --primary-hover: #357abd;
+        --background-color: #f5f7fa;
+        --card-background: #ffffff;
+        --text-color: #333333;
+        --text-secondary: #666666;
+        --border-color: #e1e4e8;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 400px;
+      }
+
+      .card {
+        background: var(--card-background);
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 32px;
+      }
+
+      .page {
+        display: none;
+      }
+
+      .page.active {
+        display: block;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 24px;
+        color: var(--primary-color);
+        font-size: 1.75rem;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+
+      .required::after {
+        content: " *";
+        color: #dc3545;
+      }
+
+      input[type="time"],
+      input[type="number"] {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      input[type="time"]:focus,
+      input[type="number"]:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.2);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          background-color 0.2s,
+          transform 0.1s;
+      }
+
+      .btn:active {
+        transform: scale(0.98);
+      }
+
+      .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--primary-hover);
+      }
+
+      .btn-secondary {
+        background-color: var(--text-secondary);
+        color: white;
+        margin-top: 16px;
+      }
+
+      .btn-secondary:hover {
+        background-color: #555555;
+      }
+
+      /* Display Page Styles */
+      .display-content {
+        text-align: center;
+      }
+
+      .countdown {
+        font-size: 4rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 24px 0;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .blocks-info {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      }
+
+      .blocks-progress {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 20px 0;
+        max-height: 120px;
+        overflow-y: auto;
+        padding: 8px;
+      }
+
+      .block-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        background-color: var(--border-color);
+      }
+
+      .block-indicator.completed {
+        background-color: var(--success-color);
+      }
+
+      .block-indicator.current {
+        background-color: var(--warning-color);
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .time-info {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 4px;
+      }
+
+      .session-complete {
+        color: var(--success-color);
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <!-- Create Page -->
+        <div id="createPage" class="page">
+          <h1>Time Block</h1>
+          <form id="timeBlockForm">
+            <div class="form-group">
+              <label for="startTime">Start Time (optional)</label>
+              <input type="time" id="startTime" name="startTime" />
+            </div>
+
+            <div class="form-group">
+              <label for="endTime" class="required">End Time</label>
+              <input type="time" id="endTime" name="endTime" required />
+              <div id="endTimeError" class="error-message"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="duration" class="required"
+                >Block Duration (minutes)</label
+              >
+              <input
+                type="number"
+                id="duration"
+                name="duration"
+                value="20"
+                min="1"
+                max="120"
+                required
+              />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save & Start</button>
+          </form>
+        </div>
+
+        <!-- Display Page -->
+        <div id="displayPage" class="page">
+          <h1>Time Block</h1>
+          <div class="display-content">
+            <div class="countdown" id="countdown">00:00</div>
+            <div class="blocks-info" id="blocksInfo">Block 0 of 0</div>
+            <div class="blocks-progress" id="blocksProgress"></div>
+            <div class="time-info">
+              <div id="endTimeDisplay"></div>
+            </div>
+            <button id="editBtn" class="btn btn-secondary">
+              Edit / Configure
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ============================================
+      // Constants
+      // ============================================
+      const STORAGE_KEY = "timeBlockData";
+      const MILLISECONDS_PER_SECOND = 1000;
+      const SECONDS_PER_MINUTE = 60;
+
+      // ============================================
+      // DOM Elements
+      // ============================================
+      const elements = {
+        createPage: document.getElementById("createPage"),
+        displayPage: document.getElementById("displayPage"),
+        form: document.getElementById("timeBlockForm"),
+        startTime: document.getElementById("startTime"),
+        endTime: document.getElementById("endTime"),
+        duration: document.getElementById("duration"),
+        endTimeError: document.getElementById("endTimeError"),
+        countdown: document.getElementById("countdown"),
+        blocksInfo: document.getElementById("blocksInfo"),
+        blocksProgress: document.getElementById("blocksProgress"),
+        endTimeDisplay: document.getElementById("endTimeDisplay"),
+        editBtn: document.getElementById("editBtn"),
+      };
+
+      // ============================================
+      // State
+      // ============================================
+      let timerInterval = null;
+
+      // ============================================
+      // Utility Functions
+      // ============================================
+      function formatTime(totalSeconds) {
+        const minutes = Math.floor(totalSeconds / SECONDS_PER_MINUTE);
+        const seconds = totalSeconds % SECONDS_PER_MINUTE;
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      }
+
+      function formatTimeString(date) {
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      function parseTimeToDate(timeString, referenceDate = new Date()) {
+        const [hours, minutes] = timeString.split(":").map(Number);
+        const date = new Date(referenceDate);
+        date.setHours(hours, minutes, 0, 0);
+        return date;
+      }
+
+      function getCurrentTimeString() {
+        const now = new Date();
+        return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      }
+
+      // ============================================
+      // Storage Functions
+      // ============================================
+      function saveData(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
+
+      function loadData() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : null;
+      }
+
+      function clearData() {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+
+      // ============================================
+      // Notification Functions
+      // ============================================
+      async function requestNotificationPermission() {
+        if ("Notification" in window && Notification.permission === "default") {
+          await Notification.requestPermission();
+        }
+      }
+
+      function sendNotification(title, body) {
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification(title, { body, icon: "⏰" });
+        }
+      }
+
+      // ============================================
+      // Calculation Functions
+      // ============================================
+      function calculateTimeBlocks(startTime, endTime, durationMinutes) {
+        const startDate = parseTimeToDate(startTime);
+        let endDate = parseTimeToDate(endTime);
+
+        // Handle case where end time is on the next day
+        if (endDate <= startDate) {
+          endDate.setDate(endDate.getDate() + 1);
+        }
+
+        const totalMinutes =
+          (endDate - startDate) /
+          (MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE);
+        const totalBlocks = Math.ceil(totalMinutes / durationMinutes);
+
+        return {
+          startDate,
+          endDate,
+          totalBlocks,
+          durationMinutes,
+        };
+      }
+
+      function getCurrentBlockInfo(data) {
+        const now = new Date();
+        const { startDate, endDate, totalBlocks, durationMinutes } = data;
+
+        // Recreate dates from stored data
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        // Check if session has ended
+        if (now >= end) {
+          return {
+            isComplete: true,
+            currentBlock: totalBlocks,
+            totalBlocks,
+            remainingSeconds: 0,
+          };
+        }
+
+        // Check if session hasn't started yet
+        if (now < start) {
+          const secondsUntilStart = Math.floor(
+            (start - now) / MILLISECONDS_PER_SECOND
+          );
+          return {
+            isComplete: false,
+            currentBlock: 0,
+            totalBlocks,
+            remainingSeconds: secondsUntilStart,
+            notStarted: true,
+          };
+        }
+
+        // Calculate current block
+        const elapsedMinutes =
+          (now - start) / (MILLISECONDS_PER_SECOND * SECONDS_PER_MINUTE);
+        const currentBlock = Math.floor(elapsedMinutes / durationMinutes) + 1;
+
+        // Calculate remaining time in current block
+        const blockStartMinutes = (currentBlock - 1) * durationMinutes;
+        const minutesIntoBlock = elapsedMinutes - blockStartMinutes;
+        const remainingMinutes = durationMinutes - minutesIntoBlock;
+        const remainingSeconds = Math.floor(
+          remainingMinutes * SECONDS_PER_MINUTE
+        );
+
+        return {
+          isComplete: false,
+          currentBlock: Math.min(currentBlock, totalBlocks),
+          totalBlocks,
+          remainingSeconds: Math.max(0, remainingSeconds),
+        };
+      }
+
+      // ============================================
+      // UI Functions
+      // ============================================
+      function showPage(pageName) {
+        elements.createPage.classList.remove("active");
+        elements.displayPage.classList.remove("active");
+
+        if (pageName === "create") {
+          elements.createPage.classList.add("active");
+          stopTimer();
+        } else {
+          elements.displayPage.classList.add("active");
+          startTimer();
+        }
+      }
+
+      function renderBlocksProgress(currentBlock, totalBlocks) {
+        elements.blocksProgress.innerHTML = "";
+
+        for (let i = 1; i <= totalBlocks; i++) {
+          const indicator = document.createElement("div");
+          indicator.className = "block-indicator";
+
+          if (i < currentBlock) {
+            indicator.classList.add("completed");
+          } else if (i === currentBlock) {
+            indicator.classList.add("current");
+          }
+
+          elements.blocksProgress.appendChild(indicator);
+        }
+      }
+
+      function updateDisplay() {
+        const data = loadData();
+        if (!data) {
+          showPage("create");
+          return;
+        }
+
+        const blockInfo = getCurrentBlockInfo(data);
+
+        if (blockInfo.isComplete) {
+          elements.countdown.innerHTML =
+            '<span class="session-complete">Complete!</span>';
+          elements.blocksInfo.textContent = `All ${blockInfo.totalBlocks} blocks completed`;
+          renderBlocksProgress(
+            blockInfo.totalBlocks + 1,
+            blockInfo.totalBlocks
+          );
+          stopTimer();
+          return;
+        }
+
+        if (blockInfo.notStarted) {
+          elements.countdown.textContent = formatTime(
+            blockInfo.remainingSeconds
+          );
+          elements.blocksInfo.textContent = "Starting soon...";
+          renderBlocksProgress(0, blockInfo.totalBlocks);
+        } else {
+          elements.countdown.textContent = formatTime(
+            blockInfo.remainingSeconds
+          );
+          elements.blocksInfo.textContent = `Block ${blockInfo.currentBlock} of ${blockInfo.totalBlocks}`;
+          renderBlocksProgress(blockInfo.currentBlock, blockInfo.totalBlocks);
+        }
+
+        elements.endTimeDisplay.textContent = `Ends at ${formatTimeString(new Date(data.endDate))}`;
+      }
+
+      // ============================================
+      // Timer Functions
+      // ============================================
+      let lastBlock = null;
+
+      function startTimer() {
+        stopTimer();
+        updateDisplay();
+
+        const data = loadData();
+        if (data) {
+          const blockInfo = getCurrentBlockInfo(data);
+          lastBlock = blockInfo.currentBlock;
+        }
+
+        timerInterval = setInterval(() => {
+          const data = loadData();
+          if (!data) {
+            stopTimer();
+            showPage("create");
+            return;
+          }
+
+          const blockInfo = getCurrentBlockInfo(data);
+
+          // Check if block changed
+          if (
+            lastBlock !== null &&
+            blockInfo.currentBlock !== lastBlock &&
+            !blockInfo.isComplete
+          ) {
+            const blocksRemaining =
+              blockInfo.totalBlocks - blockInfo.currentBlock + 1;
+            sendNotification(
+              "Time Block Complete!",
+              `${blocksRemaining} block${blocksRemaining !== 1 ? "s" : ""} remaining out of ${blockInfo.totalBlocks} total`
+            );
+          }
+
+          // Check if session complete
+          if (blockInfo.isComplete && lastBlock !== blockInfo.currentBlock) {
+            sendNotification(
+              "Session Complete!",
+              `All ${blockInfo.totalBlocks} time blocks completed!`
+            );
+          }
+
+          lastBlock = blockInfo.currentBlock;
+          updateDisplay();
+        }, MILLISECONDS_PER_SECOND);
+      }
+
+      function stopTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+        lastBlock = null;
+      }
+
+      // ============================================
+      // Form Validation
+      // ============================================
+      function validateForm() {
+        const startTime = elements.startTime.value || getCurrentTimeString();
+        const endTime = elements.endTime.value;
+
+        if (!endTime) {
+          elements.endTimeError.textContent = "End time is required";
+          return false;
+        }
+
+        elements.endTimeError.textContent = "";
+        return true;
+      }
+
+      // ============================================
+      // Event Handlers
+      // ============================================
+      function handleFormSubmit(event) {
+        event.preventDefault();
+
+        if (!validateForm()) {
+          return;
+        }
+
+        const startTime = elements.startTime.value || getCurrentTimeString();
+        const endTime = elements.endTime.value;
+        const duration = parseInt(elements.duration.value, 10);
+
+        const blockData = calculateTimeBlocks(startTime, endTime, duration);
+
+        saveData({
+          ...blockData,
+          startDate: blockData.startDate.toISOString(),
+          endDate: blockData.endDate.toISOString(),
+        });
+
+        requestNotificationPermission();
+        showPage("display");
+      }
+
+      function handleEditClick() {
+        const data = loadData();
+        if (data) {
+          // Pre-fill form with existing data
+          const startDate = new Date(data.startDate);
+          const endDate = new Date(data.endDate);
+
+          elements.startTime.value = `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`;
+          elements.endTime.value = `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`;
+          elements.duration.value = data.durationMinutes;
+        }
+
+        clearData();
+        showPage("create");
+      }
+
+      // ============================================
+      // Initialization
+      // ============================================
+      function init() {
+        // Event listeners
+        elements.form.addEventListener("submit", handleFormSubmit);
+        elements.editBtn.addEventListener("click", handleEditClick);
+
+        // Check for existing data
+        const data = loadData();
+        if (data) {
+          requestNotificationPermission();
+          showPage("display");
+        } else {
+          showPage("create");
+        }
+      }
+
+      // Start the app
+      init();
+    </script>
+  </body>
+</html>
